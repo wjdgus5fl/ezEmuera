@@ -2402,7 +2402,7 @@ namespace MinorShift.Emuera.GameProc.Function
 	            if(!(func.Argument is SpCallArgment arg))
                     throw new CodeEE("EZ error", func.Position);
 
-	            switch (arg.FuncnameTerm.GetStrValue(exm))
+	            switch (arg.FuncnameTerm.GetStrValue(exm).ToUpper())
 	            {
                     case "ADDDIC_AFTER":
                         TranslateXP.UserDic.AfterDic[arg.RowArgs[0].GetStrValue(exm)] = arg.RowArgs[1].GetStrValue(exm);
@@ -2413,11 +2413,11 @@ namespace MinorShift.Emuera.GameProc.Function
 	                    break;
                     case "TRANS_OFF":
                         GlobalStatic.EzTransState = false;
-                        exm.Console.RefreshStrings(false);
+                        exm.Console.RefreshStrings(true);
                         break;
                     case "TRANS_ON":
                         GlobalStatic.EzTransState = true;
-                        exm.Console.RefreshStrings(false);
+                        exm.Console.RefreshStrings(true);
                         break;
                 }
 	        }
