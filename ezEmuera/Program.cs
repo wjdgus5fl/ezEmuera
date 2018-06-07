@@ -173,6 +173,10 @@ namespace MinorShift.Emuera
 	        {
                 TranslateXP.LoadCache(cachePath);
 	        }
+            else
+            {
+                TranslateXP.LoadCache(null);
+            }
 
             var dicPath = Path.Combine(ExeDir, "userdic.json");
 
