@@ -970,12 +970,19 @@ namespace MinorShift.Emuera.GameProc
 						{
 							if (iLine.FunctionCode == FunctionCode.REPEAT)
 							{
-								ParserMediator.Warn("REPEAT文が入れ子にされています", func, 2, true, false);
-                                break;
+								ParserMediator.Warn("REPEAT文が入れ子にされています（無限ループの恐れがあります）", func, 1, false, false);
 							}
-						}
-						if (func.IsError)
-							break;
+                            else if (iLine.FunctionCode == FunctionCode.FOR)
+                            {
+                                VariableTerm cnt = ((SpForNextArgment)iLine.Argument).Cnt;
+                                if (cnt.Identifier.Name == "COUNT" && (cnt.isAllConst && cnt.getEl1forArg == 0))
+                                {
+                                    ParserMediator.Warn("カウンタ変数にCOUNT:0を用いたFOR文の中でREPEATが呼び出されています", func, 1, false, false);
+                                }
+                            }
+                        }
+                        if (func.IsError)
+                            break;
 						nestStack.Push(func);
 						break;
 					case FunctionCode.IF:
@@ -989,7 +996,38 @@ namespace MinorShift.Emuera.GameProc
                         SelectcaseStack.Push(func);
 						break;
 					case FunctionCode.FOR:
-					case FunctionCode.WHILE:
+                        //ネストエラーチェックのためにコストはかかるが、ここでチェックする
+                        if (func.Argument == null)
+                            ArgumentParser.SetArgumentTo(func);
+                        //上で引数解析がなされていることは保証されているので、
+                        //それでこれがfalseになるのは、引数解析でエラーが起きた場合のみ
+                        if (func.Argument != null)
+                        {
+                            VariableTerm Cnt = ((SpForNextArgment)func.Argument).Cnt;
+                            if (Cnt.Identifier.Name == "COUNT")
+                            {
+                                foreach (InstructionLine iLine in nestStack)
+                                {
+                                    if (iLine.FunctionCode == FunctionCode.REPEAT && (Cnt.isAllConst && Cnt.getEl1forArg == 0))
+                                    {
+                                        ParserMediator.Warn("REPEAT文の中でカウンタ変数にCOUNT:0を用いたFORが使われています（無限ループの恐れがあります）", func, 1, false, false);
+                                    }
+                                    else if (iLine.FunctionCode == FunctionCode.FOR)
+                                    {
+                                        VariableTerm destCnt = ((SpForNextArgment)iLine.Argument).Cnt;
+                                        if (destCnt.Identifier.Name == "COUNT" && (Cnt.isAllConst && destCnt.isAllConst && destCnt.getEl1forArg == Cnt.getEl1forArg))
+                                        {
+                                            ParserMediator.Warn("カウンタ変数にCOUNT:" + Cnt.getEl1forArg.ToString() + "を用いたFOR文が入れ子にされています（無限ループの恐れがあります）", func, 1, false, false);
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        if (func.IsError)
+                            break;
+                        nestStack.Push(func);
+                        break;
+                    case FunctionCode.WHILE:
 					case FunctionCode.TRYCGOTO:
 					case FunctionCode.TRYCJUMP:
 					case FunctionCode.TRYCCALL:
@@ -1143,7 +1181,7 @@ namespace MinorShift.Emuera.GameProc
 						if ((nestStack.Count == 0)
 							|| (nestStack.Peek().FunctionCode != parentFunc))
 						{
-							ParserMediator.Warn("対応する" + parentFunc.ToString() + "の無い" + func.Function.Name + "文です", func, 2, true, false);
+                            ParserMediator.Warn("対応する" + parentFunc.ToString() + "の無い" + func.Function.Name + "文です", func, 2, true, false);
 							break;
 						}
 						pairLine = nestStack.Pop();//REPEAT

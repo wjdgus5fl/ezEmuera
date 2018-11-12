@@ -80,6 +80,12 @@ namespace MinorShift.Emuera
 
 		protected override bool ProcessCmdKey(ref Message msg, Keys keyData)
 		{
+			//1823 INPUTMOUSEKEY Key入力全てを捕まえてERB側で処理する
+			//if (console != null && console.IsWaitingPrimitiveKey)
+			if (console != null && console.IsWaitingPrimitive)
+			{
+				return false;
+			}
 			if ((keyData & Keys.KeyCode) == Keys.B && ((keyData & Keys.Modifiers) & Keys.Control) == Keys.Control)
 			{
 				if (WindowState != FormWindowState.Minimized)
@@ -332,6 +338,12 @@ namespace MinorShift.Emuera
 				return;
 			if (console == null || console.IsInProcess)
 				return;
+			if (console.IsWaitingPrimitive)
+//			if (console.IsWaitingPrimitiveMouse)
+			{
+				console.MouseDown(e.Location, e.Button);
+				return;
+			}
 			bool isBacklog = vScrollBar.Value != vScrollBar.Maximum;
 			string str = console.SelectedString;
 
@@ -348,9 +360,9 @@ namespace MinorShift.Emuera
 				if ((e.Button == MouseButtons.Left) || (e.Button == MouseButtons.Right))
 				{
 					if (e.Button == MouseButtons.Right)
-						PressEnterKey(true);
+						PressEnterKey(true,true);
 					else
-						PressEnterKey(false);
+						PressEnterKey(false, true);
 					return;
 				}
 			}
@@ -364,9 +376,9 @@ namespace MinorShift.Emuera
                     last_inputed = "";
 				//右が押しっぱなしならスキップ追加。
 				if ((Control.MouseButtons & MouseButtons.Right) == MouseButtons.Right)
-					PressEnterKey(true);
+					PressEnterKey(true, true);
 				else
-					PressEnterKey(false);
+					PressEnterKey(false, true);
 				return;
 			}
 		}
@@ -379,9 +391,9 @@ namespace MinorShift.Emuera
             console.RefreshStrings((vScrollBar.Value == vScrollBar.Maximum) || (vScrollBar.Value == vScrollBar.Minimum));
 		}
 
-		public void PressEnterKey(bool mesSkip)
+		public void PressEnterKey(bool mesSkip, bool inputsByMouse)
 		{
-            if (console == null)
+            if (console == null || console.IsInProcess)
                 return;
 			//if (console.inProcess)
 			//{
@@ -394,10 +406,9 @@ namespace MinorShift.Emuera
                 str = str.Remove(0, last_inputed.Length);
                 last_inputed = "";
             }
-            bool mouseFlag = changeTextbyMouse;
             changeTextbyMouse = false;
 			updateInputs(str);
-            console.PressEnterKey(mesSkip, str, mouseFlag);
+			console.PressEnterKey(mesSkip, str, inputsByMouse);
 		}
 
 		string[] prevInputs = new string[100];
@@ -693,6 +704,13 @@ namespace MinorShift.Emuera
 				return;
 			if (console == null)
 				return;
+
+			if (console.IsWaitingPrimitive)
+			//			if (console.IsWaitingPrimitiveMouse)
+			{
+				console.MouseWheel(mainPicBox.PointToClient(Control.MousePosition), e.Delta);
+				return;
+			}
 			//e.Deltaには大きな値が入っているので符号のみ採用する
 			int move = -Math.Sign(e.Delta) * vScrollBar.SmallChange * Config.ScrollHeight;
 			//スクロールが必要ないならリターンする
@@ -758,7 +776,7 @@ namespace MinorShift.Emuera
             }
             //if (richTextBox1.Text.Length > 1)
             //    richTextBox1.Text = richTextBox1.Text.Remove(1);
-            PressEnterKey(false);
+            PressEnterKey(false, false);
             textBox_flag = true;
         }
 
@@ -766,6 +784,14 @@ namespace MinorShift.Emuera
         {
             if (console == null)
                 return;
+			//1823 INPUTMOUSEKEY Key入力全てを捕まえてERB側で処理する
+			//if (console.IsWaitingPrimitiveKey)
+			if (console.IsWaitingPrimitive)
+			{
+				e.SuppressKeyPress = true;
+				console.PressPrimitiveKey(e.KeyCode, e.KeyData, e.Modifiers);
+				return;
+			}
             if ((int)e.KeyData == (int)Keys.PageUp || (int)e.KeyData == (int)Keys.PageDown)
             {
                 e.SuppressKeyPress = true;
@@ -795,7 +821,7 @@ namespace MinorShift.Emuera
 			{
 				e.SuppressKeyPress = true;
 				if (!console.IsInProcess)
-                    PressEnterKey(false);
+                    PressEnterKey(false,false);
 				return;
 			}
 			if (e.KeyCode == Keys.Escape)
@@ -803,7 +829,7 @@ namespace MinorShift.Emuera
 				e.SuppressKeyPress = true;
 				console.KillMacro = true;
 				if (!console.IsInProcess)
-                    PressEnterKey(true);
+					PressEnterKey(true, false);
 				return;
 			}
             if (e.KeyCode == Keys.Left || e.KeyCode == Keys.Home || e.KeyCode == Keys.Back)
@@ -951,7 +977,7 @@ namespace MinorShift.Emuera
 		{
 			if ((console == null) || (console.IsInProcess) || !実行.Enabled)
 				return;
-			PressEnterKey(false);
+			PressEnterKey(false, false);
 		}
 
 		int macroGroup = 0;

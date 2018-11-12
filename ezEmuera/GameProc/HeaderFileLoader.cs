@@ -24,6 +24,7 @@ namespace MinorShift.Emuera.GameProc
 		readonly IdentifierDictionary idDic;
 
 		bool noError = true;
+		Queue<DimLineWC> dimlines;
 		/// <summary>
 		/// 
 		/// </summary>
@@ -34,6 +35,7 @@ namespace MinorShift.Emuera.GameProc
 		{
 			List<KeyValuePair<string, string>> headerFiles = Config.GetFiles(headerDir, "*.ERH");
 			bool noError = true;
+			dimlines = new Queue<DimLineWC>();
 			try
 			{
 				for (int i = 0; i < headerFiles.Count; i++)
@@ -47,6 +49,12 @@ namespace MinorShift.Emuera.GameProc
 						break;
 					System.Windows.Forms.Application.DoEvents();
 				}
+				if (dimlines.Count > 0)
+				{
+					noError |= analyzeSharpDimLines();
+				}
+
+				dimlines.Clear();
 			}
 			finally
 			{
@@ -101,7 +109,12 @@ namespace MinorShift.Emuera.GameProc
 							break;
 						case "DIM":
 						case "DIMS":
-							analyzeSharpDim(st, position, sharpID == "DIMS");
+							//1822 #DIMは保留しておいて後でまとめてやる
+							{
+								WordCollection wc = LexicalAnalyzer.Analyse(st, LexEndWith.EoL, LexAnalyzeFlag.AllowAssignment);
+								dimlines.Enqueue(new DimLineWC(wc, sharpID == "DIMS", false, position));
+							}
+							//analyzeSharpDim(st, position, sharpID == "DIMS");
 							break;
 						default:
 							throw new CodeEE("#" + sharpID + "は解釈できないプリプロセッサです", position);
@@ -232,18 +245,67 @@ namespace MinorShift.Emuera.GameProc
 			idDic.AddMacro(mac);
 		}
 
-		private void analyzeSharpDim(StringStream st, ScriptPosition position, bool dims)
+		//private void analyzeSharpDim(StringStream st, ScriptPosition position, bool dims)
+		//{
+		//	//WordCollection wc = LexicalAnalyzer.Analyse(st, LexEndWith.EoL, LexAnalyzeFlag.AllowAssignment);
+		//	//UserDefinedVariableData data = UserDefinedVariableData.Create(wc, dims, false, position);
+		//	//if (data.Reference)
+		//	//	throw new NotImplCodeEE();
+		//	//VariableToken var = null;
+		//	//if (data.CharaData)
+		//	//	var = parentProcess.VEvaluator.VariableData.CreateUserDefCharaVariable(data);
+		//	//else
+		//	//	var = parentProcess.VEvaluator.VariableData.CreateUserDefVariable(data);
+		//	//idDic.AddUseDefinedVariable(var);
+		//}
+
+		//1822 #DIMだけまとめておいて後で処理
+		private bool analyzeSharpDimLines()
 		{
-			WordCollection wc = LexicalAnalyzer.Analyse(st, LexEndWith.EoL, LexAnalyzeFlag.AllowAssignment);
-			UserDefinedVariableData data = UserDefinedVariableData.Create(wc, dims, false, position);
-			if (data.Reference)
-				throw new NotImplCodeEE();
-			VariableToken var = null;
-			if (data.CharaData)
-				var = parentProcess.VEvaluator.VariableData.CreateUserDefCharaVariable(data);
-			else
-				var = parentProcess.VEvaluator.VariableData.CreateUserDefVariable(data);
-			idDic.AddUseDefinedVariable(var);
+			bool noError = true;
+			bool tryAgain = true;
+			while (dimlines.Count > 0)
+			{
+				int count = dimlines.Count;
+				for (int i = 0; i < count; i++)
+				{
+					DimLineWC dimline = dimlines.Dequeue();
+					try
+					{
+						UserDefinedVariableData data = UserDefinedVariableData.Create(dimline);
+						if (data.Reference)
+							throw new NotImplCodeEE();
+						VariableToken var = null;
+						if (data.CharaData)
+							var = parentProcess.VEvaluator.VariableData.CreateUserDefCharaVariable(data);
+						else
+							var = parentProcess.VEvaluator.VariableData.CreateUserDefVariable(data);
+						idDic.AddUseDefinedVariable(var);
+					}
+					catch (IdentifierNotFoundCodeEE e)
+					{
+						//繰り返すことで解決する見込みがあるならキューの最後に追加
+						if (tryAgain)
+						{
+							dimline.WC.Pointer = 0;
+							dimlines.Enqueue(dimline);
+						}
+						else
+						{
+							ParserMediator.Warn(e.Message, dimline.SC, 2);
+							noError = true;
+						}
+					}
+					catch (CodeEE e)
+					{
+						ParserMediator.Warn(e.Message, dimline.SC, 2);
+						noError = false;
+					}
+				}
+				if (dimlines.Count == count)
+					tryAgain = false;
+			}
+			return noError;
 		}
 
 		private void analyzeSharpFunction(StringStream st, ScriptPosition position, bool funcs)

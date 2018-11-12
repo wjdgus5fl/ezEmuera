@@ -605,6 +605,7 @@ namespace MinorShift.Emuera
 
 		//1756 作成中途
 		//名前リストを元に何がやりたかったのかを推定してCodeEEを投げる
+		//1822 DIMリストの解決中にIdentifierNotFoundCodeEEが飛んだ場合にはやり直しの可能性がある
 		public void ThrowException(string str, bool isFunc)
 		{
 			string idStr = str;
@@ -613,7 +614,7 @@ namespace MinorShift.Emuera
 			if (disableList.Contains(idStr))
 				throw new CodeEE("\"" + str + "\"は#DISABLEが宣言されています");
 			if (!isFunc && privateDimList.Contains(idStr))
-				throw new CodeEE("変数\"" + str + "\"はこの関数中では定義されていません");
+				throw new IdentifierNotFoundCodeEE("変数\"" + str + "\"はこの関数中では定義されていません");
 			if (nameDic.ContainsKey(idStr))
 			{
 				DefinedNameType type = nameDic[idStr];
@@ -641,7 +642,7 @@ namespace MinorShift.Emuera
 			
 				}
 			}
-			throw new CodeEE("\"" + idStr + "\"は解釈できない識別子です");
+			throw new IdentifierNotFoundCodeEE("\"" + idStr + "\"は解釈できない識別子です");
 		}
 		#endregion
 

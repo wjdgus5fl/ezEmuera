@@ -109,6 +109,7 @@ namespace MinorShift.Emuera
             //一文字変数の禁止オプションを考えた名残
 			//configArray[i++] = new ConfigItem<bool>(ConfigCode.ForbidOneCodeVariable, "一文字変数の使用を禁止する", false);
 			configArray[i++] = new ConfigItem<bool>(ConfigCode.SystemNoTarget, "キャラクタ変数の引数を補完しない", false);
+			configArray[i++] = new ConfigItem<bool>(ConfigCode.SystemIgnoreStringSet, "文字列変数の代入に文字列式を強制する", false);
 
 			i = 0;
 			debugArray[i++] = new ConfigItem<bool>(ConfigCode.DebugShowWindow, "起動時にデバッグウインドウを表示する", true);
@@ -496,7 +497,7 @@ namespace MinorShift.Emuera
 							((ConfigItem<string>)item).Value = tokens[1];
 							continue;
 						}
-                        if (item.Code == ConfigCode.MaxLog)
+                        if (item.Code == ConfigCode.MaxLog && Program.AnalysisMode)
                         {
                             //解析モード時はここを上書きして十分な長さを確保する
                             tokens[1] = "10000";

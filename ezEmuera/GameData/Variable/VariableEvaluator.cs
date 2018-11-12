@@ -399,23 +399,19 @@ namespace MinorShift.Emuera.GameData.Variable
 			{
 				for (int i = (int)end - 1; i >= (int)start; i--)
 				{
+					//1823 Nullなら空文字列として扱う
+					string str = array[i] ?? "";
 					if (isExact)
 					{
-						//Nullならないものと見なして飛ばす
-						if (array[i] == null)
-							continue;
-						Match match = target.Match(array[i]);
+						Match match = target.Match(str);
 						//正規表現に引っかかった文字列の長さ＝元の文字列の長さなら完全一致
-						if (match.Success && array[i].Length == match.Length)
+						if (match.Success && str.Length == match.Length)
 							return (Int64)i;
 					}
 					else
 					{
-						//Nullならないものと見なして飛ばす
-						if (array[i] == null)
-							continue;
 						//部分一致なのでひっかかればOK
-						if (target.IsMatch(array[i]))
+						if (target.IsMatch(str))
 							return (Int64)i;
 					}
 				}
@@ -424,23 +420,19 @@ namespace MinorShift.Emuera.GameData.Variable
 			{
 				for (int i = (int)start; i < (int)end; i++)
 				{
+					//1823 Nullなら空文字列として扱う
+					string str = array[i] ?? "";
 					if (isExact)
 					{
-						//Nullならないものと見なして飛ばす
-						if (array[i] == null)
-							continue;
 						//正規表現に引っかかった文字列の長さ＝元の文字列の長さなら完全一致
-						Match match = target.Match(array[i]);
-						if (match.Success && array[i].Length == match.Length)
+						Match match = target.Match(str);
+						if (match.Success && str.Length == match.Length)
 							return (Int64)i;
 					}
 					else
 					{
-						//Nullならないものと見なして飛ばす
-						if (array[i] == null)
-							continue;
 						//部分一致なのでひっかかればOK
-						if (target.IsMatch(array[i]))
+						if (target.IsMatch(str))
 							return (Int64)i;
 					}
 				}
@@ -533,7 +525,7 @@ namespace MinorShift.Emuera.GameData.Variable
 				array = (Int64[])p.Identifier.GetArray();
 
 			if (start >= array.Length)
-				throw new CodeEE("命令ARRAYREMOVEの第４引数(" + start.ToString() + ")が配列" + p.Identifier.Name + "の範囲を超えています");
+				throw new CodeEE("命令ARRAYSHIFTの第４引数(" + start.ToString() + ")が配列" + p.Identifier.Name + "の範囲を超えています");
 
 			if (num == -1)
 				num = array.Length - start;
@@ -606,7 +598,7 @@ namespace MinorShift.Emuera.GameData.Variable
 				arrays = (string[])p.Identifier.GetArray();
 
 			if (start >= arrays.Length)
-				throw new CodeEE("命令ARRAYREMOVEの第４引数(" + start.ToString() + ")が配列" + p.Identifier.Name + "の範囲を超えています");
+				throw new CodeEE("命令ARRAYSHIFTの第４引数(" + start.ToString() + ")が配列" + p.Identifier.Name + "の範囲を超えています");
 
 			//for (int i = 0; i < arrays.Length; i++)
 			//    arrays[i] = "";
@@ -2208,51 +2200,56 @@ namespace MinorShift.Emuera.GameData.Variable
 		public bool SaveGlobal()
 		{
 			string filepath = getSaveDataPathG();
-			EraDataWriter writer = null;
-			EraBinaryDataWriter bWriter = null;
-			FileStream fs = null;
 			try
 			{
 				Config.CreateSavDir();
-				fs = new FileStream(filepath, FileMode.Create, FileAccess.Write);
-				if (Config.SystemSaveInBinary)
+				using (FileStream fs = new FileStream(filepath, FileMode.Create, FileAccess.Write))
 				{
+					if (Config.SystemSaveInBinary)
+					{
 
-					bWriter = new EraBinaryDataWriter(fs);
-					bWriter.WriteHeader();
-					bWriter.WriteFileType(EraSaveFileType.Global);
-					bWriter.WriteInt64(gamebase.ScriptUniqueCode);
-					bWriter.WriteInt64(gamebase.ScriptVersion);
-					bWriter.WriteString("");//saveMes
-					varData.SaveGlobalToStreamBinary(bWriter);
-					bWriter.WriteEOF();
-				}
-				else
-				{
-					writer = new EraDataWriter(fs);
-					writer.Write(gamebase.ScriptUniqueCode);
-					writer.Write(gamebase.ScriptVersion);
-					varData.SaveGlobalToStream(writer);
-					writer.EmuStart();
-					varData.SaveGlobalToStream1808(writer);
+						using (EraBinaryDataWriter bWriter = new EraBinaryDataWriter(fs))
+						{
+							bWriter.WriteHeader();
+							bWriter.WriteFileType(EraSaveFileType.Global);
+							bWriter.WriteInt64(gamebase.ScriptUniqueCode);
+							bWriter.WriteInt64(gamebase.ScriptVersion);
+							bWriter.WriteString("");//saveMes
+							varData.SaveGlobalToStreamBinary(bWriter);
+							bWriter.WriteEOF();
+							bWriter.Close();
+						}
+					}
+					else
+					{
+						using (EraDataWriter writer = new EraDataWriter(fs))
+						{
+							writer.Write(gamebase.ScriptUniqueCode);
+							writer.Write(gamebase.ScriptVersion);
+							varData.SaveGlobalToStream(writer);
+							writer.EmuStart();
+							varData.SaveGlobalToStream1808(writer);
+							writer.Close();
+						}
+					}
 				}
 			}
-			//catch (SystemException)
-			//{
-			//	throw new CodeEE("グローバルデータの保存中にエラーが発生しました");
-			//	//console.PrintError(
-			//	//console.NewLine();
-			//	//return false;
-			//}
-			finally
+			catch (SystemException)
 			{
-				if (writer != null)
-					writer.Close();
-				else if (bWriter != null)
-					bWriter.Close();
-				else if (fs != null)
-					fs.Close();
+				throw new CodeEE("グローバルデータの保存中にエラーが発生しました");
+				//console.PrintError(
+				//console.NewLine();
+				//return false;
 			}
+			//finally
+			//{
+			//	if (writer != null)
+			//		writer.Close();
+			//	else if (bWriter != null)
+			//		bWriter.Close();
+			//	else if (fs != null)
+			//		fs.Close();
+			//}
 			return true;
 		}
 

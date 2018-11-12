@@ -113,6 +113,7 @@ namespace MinorShift.Emuera
 				SaveEncode = Encoding.GetEncoding("UTF-8");
 			SystemSaveInBinary = instance.GetConfigValue<bool>(ConfigCode.SystemSaveInBinary);
 			SystemIgnoreTripleSymbol = instance.GetConfigValue<bool>(ConfigCode.SystemIgnoreTripleSymbol);
+			SystemIgnoreStringSet = instance.GetConfigValue<bool>(ConfigCode.SystemIgnoreStringSet);
 			
 			CompatiFuncArgAutoConvert = instance.GetConfigValue<bool>(ConfigCode.CompatiFuncArgAutoConvert);
 			CompatiFuncArgOptional = instance.GetConfigValue<bool>(ConfigCode.CompatiFuncArgOptional);
@@ -169,7 +170,7 @@ namespace MinorShift.Emuera
 			if (TextDrawingMode != TextDrawingMode.WINAPI)
 				DrawingParam_ShapePositionShift = Math.Max(2, FontSize / 6);
 			DrawableWidth = WindowX - DrawingParam_ShapePositionShift;
-
+			ForceSavDir = Program.ExeDir + "sav\\";
 			if (UseSaveFolder)
 				SavDir = Program.ExeDir + "sav\\";
 			else
@@ -218,6 +219,17 @@ namespace MinorShift.Emuera
 				fontStyleDicPair.Value.Clear();
 			}
 			fontDic.Clear();
+		}
+
+		/// <summary>
+		/// ディレクトリ作成失敗のExceptionは呼び出し元で処理すること
+		/// </summary>
+		public static void ForceCreateSavDir()
+		{
+			if (!Directory.Exists(ForceSavDir))
+			{
+				Directory.CreateDirectory(ForceSavDir);
+			}
 		}
 
 		/// <summary>
@@ -485,10 +497,16 @@ namespace MinorShift.Emuera
 		public static bool CompatiSPChara { get; private set; }
 		public static bool SystemIgnoreTripleSymbol { get; private set; }
 		public static bool SystemNoTarget { get; private set; }
-		
-        public static int Language { get; private set; }
-		
+#if DEBUG
+		public static bool SystemIgnoreStringSet { get { return true; } private set{} }
+#else
+		public static bool SystemIgnoreStringSet { get; private set; }
+#endif
+
+		public static int Language { get; private set; }
+
 		public static string SavDir { get; private set; }
+		public static string ForceSavDir { get; private set; }
 
 		public static bool NeedReduceArgumentOnLoad { get; private set; }
 

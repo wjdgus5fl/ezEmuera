@@ -46,6 +46,11 @@ namespace MinorShift.Emuera
 			ExeDir = Sys.ExeDir;
 #if DEBUG
 			//debugMode = true;
+
+			//ExeDirにバリアントのパスを代入することでテスト実行するためのコード。
+			//ローカルパスの末尾には\必須。
+			//ローカルパスを記載した場合は頒布前に削除すること。
+
 #endif
 			CsvDir = ExeDir + "csv\\";
 			ErbDir = ExeDir + "erb\\";
@@ -56,10 +61,23 @@ namespace MinorShift.Emuera
 			//1815 .exeが東方板のNGワードに引っかかるそうなので除去
 			ExeName = Path.GetFileNameWithoutExtension(Sys.ExeName);
 
+			//解析モードの判定だけ先に行う
+			int argsStart = 0;
+			if ((args.Length > 0) && (args[0].Equals("-DEBUG", StringComparison.CurrentCultureIgnoreCase)))
+			{
+				argsStart = 1;//デバッグモードかつ解析モード時に最初の1っこ(-DEBUG)を飛ばす
+				debugMode = true;
+			}
+			if (args.Length > argsStart)
+			{
+				//必要なファイルのチェックにはConfig読み込みが必須なので、ここではフラグだけ立てておく
+				AnalysisMode = true;
+			}
+
 			Application.EnableVisualStyles();
 			Application.SetCompatibleTextRenderingDefault(false);
 			ConfigData.Instance.LoadConfig();
-            //二重起動の禁止かつ二重起動
+			//二重起動の禁止かつ二重起動
 			if ((!Config.AllowMultipleInstances) && (Sys.PrevInstance()))
 			{
 				MessageBox.Show("多重起動を許可する場合、emuera.configを書き換えて下さい", "既に起動しています");
@@ -75,13 +93,7 @@ namespace MinorShift.Emuera
 				MessageBox.Show("erbフォルダが見つかりません", "フォルダなし");
 				return;
 			}
-            int argsStart = 0;
-            if ((args.Length > 0)&&(args[0].Equals("-DEBUG", StringComparison.CurrentCultureIgnoreCase)))
-            {
-                argsStart = 1;//デバッグモードかつ解析モード時に最初の1っこ(-DEBUG)を飛ばす
-				debugMode = true;
-            }
-			if(debugMode)
+			if (debugMode)
 			{
 				ConfigData.Instance.LoadDebugConfig();
 				if (!Directory.Exists(DebugDir))
@@ -97,38 +109,37 @@ namespace MinorShift.Emuera
 					}
 				}
 			}
-            if (args.Length > argsStart)
-            {
-                AnalysisFiles = new List<string>();
-                for (int i = argsStart; i < args.Length; i++)
-                {
-                    if (!File.Exists(args[i]) && !Directory.Exists(args[i]))
-                    {
-                        MessageBox.Show("与えられたファイル・フォルダは存在しません");
-                        return;
-                    }
-                    if ((File.GetAttributes(args[i]) & FileAttributes.Directory) == FileAttributes.Directory)
-                    {
-                        List<KeyValuePair<string, string>> fnames = Config.GetFiles(args[i] + "\\", "*.ERB");
-                        for (int j = 0; j < fnames.Count; j++)
-                        {
-                            AnalysisFiles.Add(fnames[j].Value);
-                        }
-                    }
-                    else
-                    {
-                        if (Path.GetExtension(args[i]).ToUpper() != ".ERB")
-                        {
-                            MessageBox.Show("ドロップ可能なファイルはERBファイルのみです");
-                            return;
-                        }
-                        AnalysisFiles.Add(args[i]);
-                    }
-                }
-                AnalysisMode = true;
-            }
+			if (AnalysisMode)
+			{
+				AnalysisFiles = new List<string>();
+				for (int i = argsStart; i < args.Length; i++)
+				{
+					if (!File.Exists(args[i]) && !Directory.Exists(args[i]))
+					{
+						MessageBox.Show("与えられたファイル・フォルダは存在しません");
+						return;
+					}
+					if ((File.GetAttributes(args[i]) & FileAttributes.Directory) == FileAttributes.Directory)
+					{
+						List<KeyValuePair<string, string>> fnames = Config.GetFiles(args[i] + "\\", "*.ERB");
+						for (int j = 0; j < fnames.Count; j++)
+						{
+							AnalysisFiles.Add(fnames[j].Value);
+						}
+					}
+					else
+					{
+						if (Path.GetExtension(args[i]).ToUpper() != ".ERB")
+						{
+							MessageBox.Show("ドロップ可能なファイルはERBファイルのみです");
+							return;
+						}
+						AnalysisFiles.Add(args[i]);
+					}
+				}
+			}
 
-            InitEzEmuera();
+			InitEzEmuera();
 
 			MainWindow win = null;
 			while (true)
@@ -164,6 +175,7 @@ namespace MinorShift.Emuera
 
             ExitEzEmuera();
 		}
+
 
 	    private static void InitEzEmuera()
 	    {
@@ -252,11 +264,11 @@ namespace MinorShift.Emuera
 		public static bool Reboot = false;
 		//public static int RebootClientX = 0;
 		public static int RebootClientY = 0;
-        public static FormWindowState RebootWinState = FormWindowState.Normal;
+		public static FormWindowState RebootWinState = FormWindowState.Normal;
 		public static Point RebootLocation;
 
-        public static bool AnalysisMode = false;
-        public static List<string> AnalysisFiles = null;
+		public static bool AnalysisMode = false;
+		public static List<string> AnalysisFiles = null;
 
 		public static bool debugMode = false;
 		public static bool DebugMode { get { return debugMode; } }

@@ -75,9 +75,10 @@
     <Compile Include="Config\Config.cs" />
     <Compile Include="Content\AContentFile.cs" />
     <Compile Include="Content\AContentItem.cs" />
-    <Compile Include="Content\BaseImage.cs" />
+    <Compile Include="Content\ConstImage.cs" />
     <Compile Include="Content\AppContents.cs" />
     <Compile Include="Content\CroppedImage.cs" />
+    <Compile Include="Content\GraphicsImage.cs" />
     <Compile Include="EzEmueraSetting.cs" />
     <Compile Include="Forms\ClipBoardDialog.cs">
       <SubType>Form</SubType>
@@ -156,6 +157,7 @@
     <Compile Include="GameView\StringMeasure.cs" />
     <Compile Include="GameView\StringStyle.cs" />
     <Compile Include="GlobalStatic.cs" />
+    <Compile Include="GlobalSuppressions.cs" />
     <Compile Include="Sub\EmueraException.cs" />
     <Compile Include="GameProc\Function\BuiltInFunctionCode.cs" />
     <Compile Include="GameProc\Function\FunctionIdentifier.cs" />
@@ -243,6 +245,7 @@
     <Compile Include="_Library\GDI.cs" />
     <Compile Include="_Library\SFMT.cs" />
     <Compile Include="_Library\LangManager.cs" />
+    <Compile Include="_Library\WinInput.cs" />
     <Compile Include="_Library\WinmmTimer.cs" />
     <Compile Include="_Library\Sys.cs" />
   </ItemGroup>

@@ -118,6 +118,7 @@ namespace MinorShift.Emuera.GameProc
 				gamebase = new GameBase();
                 if (!gamebase.LoadGameBaseCsv(Program.CsvDir + "GAMEBASE.CSV"))
                 {
+					ParserMediator.FlushWarningList();
                     console.PrintSystemLine("GAMEBASE.CSVの読み込み中に問題が発生したため処理を終了しました");
                     return false;
                 }
@@ -148,6 +149,7 @@ namespace MinorShift.Emuera.GameProc
 				LexicalAnalyzer.UseMacro = false;
 				if (!hLoader.LoadHeaderFiles(Program.ErbDir, Config.DisplayReport))
 				{
+					ParserMediator.FlushWarningList();
 					console.PrintSystemLine("ERHの読み込み中にエラーが発生したため処理を終了しました");
 					return false;
 				}
@@ -218,6 +220,15 @@ namespace MinorShift.Emuera.GameProc
             return (callFunction("CALLTRAINEND", false, false));
         }
 
+		public void InputResult5(int r0, int r1, int r2, int r3, int r4)
+		{
+			long[] result = vEvaluator.RESULT_ARRAY;
+			result[0] = r0;
+			result[1] = r1;
+			result[2] = r2;
+			result[3] = r3;
+			result[4] = r4;
+		}
 		public void InputInteger(Int64 i)
 		{
 			vEvaluator.RESULT = i;
@@ -269,6 +280,12 @@ namespace MinorShift.Emuera.GameProc
 			vEvaluator.ResetData();
 			state = originalState;
 			state.Begin(BeginType.TITLE);
+		}
+
+		public void UpdateCheckInfiniteLoopState()
+		{
+			startTime = _Library.WinmmTimer.TickCount;
+			state.lineCount = 0;
 		}
 
 		private void checkInfiniteLoop()

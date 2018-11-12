@@ -28,41 +28,36 @@
 		/// </summary>
 		private void InitializeComponent()
 		{
-            this.colorDialog = new System.Windows.Forms.ColorDialog();
-            this.button = new System.Windows.Forms.Button();
-            this.pictureBox1 = new System.Windows.Forms.PictureBox();
-            ((System.ComponentModel.ISupportInitialize)(this.pictureBox1)).BeginInit();
-            this.SuspendLayout();
-            // 
-            // button
-            // 
-            this.button.Location = new System.Drawing.Point(99, 4);
-            this.button.Name = "button";
-            this.button.Size = new System.Drawing.Size(108, 24);
-            this.button.TabIndex = 1;
-            this.button.Text = "button1";
-            this.button.UseVisualStyleBackColor = true;
-            this.button.Click += new System.EventHandler(this.button_Click);
-            // 
-            // pictureBox1
-            // 
-            this.pictureBox1.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
-            this.pictureBox1.Location = new System.Drawing.Point(3, 4);
-            this.pictureBox1.Name = "pictureBox1";
-            this.pictureBox1.Size = new System.Drawing.Size(90, 24);
-            this.pictureBox1.TabIndex = 2;
-            this.pictureBox1.TabStop = false;
-            // 
-            // ColorBox
-            // 
-            this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 12F);
-            this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.Controls.Add(this.pictureBox1);
-            this.Controls.Add(this.button);
-            this.Name = "ColorBox";
-            this.Size = new System.Drawing.Size(215, 30);
-            ((System.ComponentModel.ISupportInitialize)(this.pictureBox1)).EndInit();
-            this.ResumeLayout(false);
+			System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(ColorBox));
+			this.colorDialog = new System.Windows.Forms.ColorDialog();
+			this.button = new System.Windows.Forms.Button();
+			this.pictureBox1 = new System.Windows.Forms.PictureBox();
+			((System.ComponentModel.ISupportInitialize)(this.pictureBox1)).BeginInit();
+			this.SuspendLayout();
+			// 
+			// button
+			// 
+			resources.ApplyResources(this.button, "button");
+			this.button.Name = "button";
+			this.button.UseVisualStyleBackColor = true;
+			this.button.Click += new System.EventHandler(this.button_Click);
+			// 
+			// pictureBox1
+			// 
+			this.pictureBox1.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
+			resources.ApplyResources(this.pictureBox1, "pictureBox1");
+			this.pictureBox1.Name = "pictureBox1";
+			this.pictureBox1.TabStop = false;
+			// 
+			// ColorBox
+			// 
+			resources.ApplyResources(this, "$this");
+			this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
+			this.Controls.Add(this.pictureBox1);
+			this.Controls.Add(this.button);
+			this.Name = "ColorBox";
+			((System.ComponentModel.ISupportInitialize)(this.pictureBox1)).EndInit();
+			this.ResumeLayout(false);
 
 		}
 
