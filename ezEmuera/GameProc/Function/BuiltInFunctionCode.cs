@@ -355,5 +355,7 @@ namespace MinorShift.Emuera.GameProc.Function
 		PRINT_SPACE,
 
 		INPUTMOUSEKEY,
+
+		EZ,
 	}
 }
