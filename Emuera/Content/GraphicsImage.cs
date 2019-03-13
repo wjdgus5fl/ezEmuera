@@ -180,12 +180,7 @@ namespace MinorShift.Emuera.Content
 		{
 			if (g == null)
 				throw new NullReferenceException();
-			if(!img.Position.IsEmpty)
-			{
-				destRect.X = destRect.X + img.Position.X * destRect.Width / img.Rectangle.Width;
-				destRect.Y = destRect.Y + img.Position.Y * destRect.Height / img.Rectangle.Height;
-			}
-			g.DrawImage(img.Bitmap, destRect, img.Rectangle, GraphicsUnit.Pixel);
+			img.GraphicsDraw(g, destRect);
 		}
 
 		/// <summary>
@@ -200,13 +195,7 @@ namespace MinorShift.Emuera.Content
 			ColorMatrix colorMatrix = new ColorMatrix(cm);
 			imageAttributes.SetColorMatrix(colorMatrix, ColorMatrixFlag.Default, ColorAdjustType.Bitmap);
 
-			Rectangle srcRect = img.Rectangle;
-			if (!img.Position.IsEmpty)
-			{
-				destRect.X = destRect.X + img.Position.X * destRect.Width / srcRect.Width;
-				destRect.Y = destRect.Y + img.Position.Y * destRect.Height / srcRect.Height;
-			}
-			g.DrawImage(img.Bitmap, destRect, srcRect.X, srcRect.Y, srcRect.Width, srcRect.Height, GraphicsUnit.Pixel, imageAttributes);
+			img.GraphicsDraw(g, destRect, imageAttributes);
 		}
 
 		/// <summary>

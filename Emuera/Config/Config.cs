@@ -497,11 +497,7 @@ namespace MinorShift.Emuera
 		public static bool CompatiSPChara { get; private set; }
 		public static bool SystemIgnoreTripleSymbol { get; private set; }
 		public static bool SystemNoTarget { get; private set; }
-#if DEBUG
-		public static bool SystemIgnoreStringSet { get { return true; } private set{} }
-#else
 		public static bool SystemIgnoreStringSet { get; private set; }
-#endif
 
 		public static int Language { get; private set; }
 

@@ -8,6 +8,7 @@ namespace MinorShift.Emuera.Content
 {
 	internal abstract class AbstractImage : AContentFile
 	{
+		public const int MAX_IMAGESIZE = 8192;
 		public Bitmap Bitmap;
 		public IntPtr GDIhDC { get; protected set; }
 		protected Graphics g;

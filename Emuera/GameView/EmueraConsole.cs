@@ -72,8 +72,13 @@ namespace MinorShift.Emuera.GameView
 			timer = new Timer();
 			timer.Enabled = false;
 			timer.Tick += new EventHandler(tickTimer);
-			timer.Interval = 100;
+			timer.Interval = 10;
 			CBG_Clear();//文字列描画用ダミー追加
+
+			redrawTimer = new Timer();
+			redrawTimer.Enabled = false;//TODO:1824アニメ用再描画タイマー有効化関数の追加
+			redrawTimer.Tick += new EventHandler(tickRedrawTimer);
+			redrawTimer.Interval = 10;
         }
 #region 1823 cbg関連
 		private readonly List<ClientBackGroundImage> cbgList = new List<ClientBackGroundImage>();
@@ -473,12 +478,12 @@ namespace MinorShift.Emuera.GameView
 		{
 			state = ConsoleState.WaitInput;
 			inputReq = req;
-			//TODO 1823:Timelimitが0以下だったら？
 			if (req.Timelimit > 0)
 			{
 				if (req.OneInput)
 					window.update_lastinput();
-				setTimer();
+				presetTimer();
+//				setTimer();
 			}
 			//updateMousePosition();
 			//Point point = window.MainPicBox.PointToClient(Control.MousePosition);
@@ -503,27 +508,79 @@ namespace MinorShift.Emuera.GameView
 		}
 
 
+		/// <summary>
+		/// INPUT中のアニメーション用タイマー
+		/// </summary>
+		Timer redrawTimer = null;
+
+		private void tickRedrawTimer(object sender, EventArgs e)
+		{
+			if (!redrawTimer.Enabled)
+				return;
+			//INPUT待ちでないとき、又はタイマー付きINPUT状態の場合はこれ以外の処理に任せる
+			if (state != ConsoleState.WaitInput || timer.Enabled)
+			{
+				return;
+			}
+			window.Refresh();//OnPaint発行
+		}
+
+		/// <summary>
+		/// アニメーション用タイマーの設定。0以下の値を指定するとタイマー停止
+		/// </summary>
+		public void setRedrawTimer(int tickcount)
+		{
+			if (tickcount <= 0)
+			{
+				redrawTimer.Enabled = false;
+				return;
+			}
+			if (tickcount < 10)
+				tickcount = 10;
+			redrawTimer.Interval = tickcount;
+			redrawTimer.Enabled = true;
+		}
+
+
+
 		Timer timer = null;
 		Int64 timerID = -1;
-        int countTime = 0;
+		Int64 timer_startTime;//現在のタイマーを開始した時のミリ秒数（WinmmTimer.TickCount基準）
+		Int64 timer_nextDisplayTime;//TINPUT系で次に残り時間を表示する時のTickCountミリ秒数
+		Int64 timer_endTime;//現在のタイマーを終了する時のTickCountミリ秒数
         bool wait_timeout = false;
         bool isTimeout = false;
         public bool IsTimeOut { get { return isTimeout; } }
 
-		private void setTimer()
-		{
-			countTime = 0;
-			isTimeout = false;
-			timerID = inputReq.ID;
-			timer.Enabled = true;
+		/// <summary>
+		/// 1824 TINPUT時に直接タイマーをセットせずに最初の再描画が終わってからタイマーをセットする（そうしないとTINPUTと再描画だけでループしてしまうので）
+		/// </summary>
+		bool need_settimer = false;
 
+		private void presetTimer()
+		{
+			need_settimer = true;
 			if (inputReq.DisplayTime)
 			{
+				//100ms未満の場合、一瞬だけ残り0が表示されて終了
+				//timer_nextDisplayTime = timer_startTime + 100;
 				long start = inputReq.Timelimit / 100;
 				string timeString1 = "残り ";
 				string timeString2 = ((double)start / 10.0).ToString();
 				PrintSingleLine(timeString1 + timeString2);
 			}
+		}
+		private void setTimer()
+		{
+			isTimeout = false;
+			timerID = inputReq.ID;
+			timer.Enabled = true;
+			timer_startTime = WinmmTimer.TickCount;
+			timer_endTime = timer_startTime + inputReq.Timelimit;
+			//if (inputReq.DisplayTime)
+			//次に残り時間を表示するタイミングの設定。inputReq.DisplayTime==tureでないなら設定するだけで参照はされない（はず
+			timer_nextDisplayTime = timer_startTime + 100;
+
 		}
 
 		//汎用
@@ -540,15 +597,17 @@ namespace MinorShift.Emuera.GameView
 				return;
 #endif
 			}
-			countTime += 100;
-			if (countTime >= inputReq.Timelimit)
+			long curtime = WinmmTimer.TickCount;
+			if (curtime >= timer_endTime)
 			{
 				endTimer();
 				return;
 			}
-			if(inputReq.DisplayTime)
+			if (inputReq.DisplayTime && curtime >= timer_nextDisplayTime)
 			{
-				long time = (inputReq.Timelimit - countTime) / 100;
+				//表示に時間がかかってタイマーが止まるので次の描画は100ms後。場合によっては表示が0.2一気に飛ぶ。
+				timer_nextDisplayTime = curtime + 100;
+				long time = (timer_endTime - curtime) / 100;
 				string timeString1 = "残り ";
 				string timeString2 = ((double)time / 10.0).ToString();
 				changeLastLine(timeString1 + timeString2);
@@ -1166,13 +1225,17 @@ namespace MinorShift.Emuera.GameView
 		/// <param name="graph"></param>
 		public void OnPaint(Graphics graph)
 		{
+
+			//デバッグ用。描画が超重い環境を想定1
+			//System.Threading.Thread.Sleep(100);
+			
 			//描画中にEmueraが閉じられると廃棄されたPictureBoxにアクセスしてしまったりするので
 			//OnPaintからgraphをもらった直後だから大丈夫だとは思うけど一応
 			if (!this.Enabled)
 				return;
-
-			//描画命令を発行したRefresh時にすべきか、OnPaintの開始にすべきか、OnPaintの終了にするか
-			lastUpdate = WinmmTimer.TickCount;
+			//1824 アニメスプライト用・現在フレームの時間を決定
+			WinmmTimer.FrameStart();
+			lastUpdate = WinmmTimer.CurrentFrameTime;//WinmmTimer.TickCount;
 
 			bool isBackLog = window.ScrollBar.Value != window.ScrollBar.Maximum;
 			int pointY = window.MainPicBox.Height - Config.LineHeight;
@@ -1223,10 +1286,11 @@ namespace MinorShift.Emuera.GameView
 						img = cbgList[j].ImgB;
 					if (img == null || !img.IsCreated)
 						continue;
-					Bitmap bmp = img.Bitmap;
-					graph.DrawImage(bmp,
-						new Rectangle(cbgList[j].x + img.Position.X, window.MainPicBox.Height - img.Rectangle.Height + cbgList[j].y + img.Position.Y, img.Rectangle.Width, img.Rectangle.Height),
-						img.Rectangle, GraphicsUnit.Pixel);
+					img.GraphicsDraw(graph, new Point(cbgList[j].x, cbgList[j].y + window.MainPicBox.Height - img.DestBaseSize.Height));
+					//Bitmap bmp = img.Bitmap;
+					//graph.DrawImage(bmp,
+					//	new Rectangle(cbgList[j].x + img.DestBasePosition.X, window.MainPicBox.Height - img.SrcRectangle.Height + cbgList[j].y + img.DestBasePosition.Y, img.SrcRectangle.Width, img.SrcRectangle.Height),
+					//	img.SrcRectangle, GraphicsUnit.Pixel);
 				}
 
 			}
@@ -1269,10 +1333,15 @@ namespace MinorShift.Emuera.GameView
 			else
 				lastDrawnLineNo = lineNo;
 			lastSelectingButton = selectingButton;
-			/*デバッグ用。描画が超重い環境を想定
+			/*デバッグ用。描画が超重い環境を想定2
 			System.Threading.Thread.Sleep(50);
 			*/
 			forceTextBoxColor = false;
+			if(need_settimer)
+			{
+				need_settimer = false;
+				setTimer();
+			}
 		}
 
 		public void SetToolTipColor(Color foreColor, Color backColor)
@@ -1749,6 +1818,7 @@ namespace MinorShift.Emuera.GameView
             {
                 timer_suspended = false;
                 timer.Enabled = true;
+				//タイマー待機中の時間ずれは修正しない。タイマー中にリロードしたらほぼ強制タイムアウトする程度は仕様のうちであろう。
             }
 		}
 
@@ -1840,7 +1910,7 @@ namespace MinorShift.Emuera.GameView
 		{
 			if(timer != null)
 				timer.Dispose();
-			timer = null;
+			//timer = null;
 			//stringMeasure.Dispose();
 		}
 

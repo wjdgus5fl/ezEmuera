@@ -55,6 +55,7 @@ namespace MinorShift.Emuera.GameProc
             try
             {
 				ParserMediator.Initialize(console);
+				//コンフィグファイルに関するエラーの処理（コンフィグファイルはこの関数に入る前に読込済み）
 				if (ParserMediator.HasWarning)
 				{
 					ParserMediator.FlushWarningList();
@@ -65,8 +66,15 @@ namespace MinorShift.Emuera.GameProc
 						return false;
 					}
 				}
-				Content.AppContents.LoadContents();
-				
+				//リソースフォルダ読み込み
+				if (!Content.AppContents.LoadContents())
+				{
+					ParserMediator.FlushWarningList();
+					console.PrintSystemLine("リソースフォルダ読み込み中に異常が発見されたため処理を終了します");
+					return false;
+				}
+				ParserMediator.FlushWarningList();
+				//キーマクロ読み込み
                 if (Config.UseKeyMacro && !Program.AnalysisMode)
                 {
                     if (File.Exists(Program.ExeDir + "macro.txt"))
@@ -75,7 +83,8 @@ namespace MinorShift.Emuera.GameProc
 							console.PrintSystemLine("macro.txt読み込み中・・・");
                         KeyMacro.LoadMacroFile(Program.ExeDir + "macro.txt");
                     }
-                }
+				}
+				//_replace.csv読み込み
                 if (Config.UseReplaceFile && !Program.AnalysisMode)
                 {
 					if (File.Exists(Program.CsvDir + "_Replace.csv"))
@@ -99,6 +108,7 @@ namespace MinorShift.Emuera.GameProc
                 //ここでBARを設定すれば、いいことに気づいた予感
                 console.setStBar(Config.DrawLineString);
 
+				//_rename.csv読み込み
 				if (Config.UseRenameFile)
                 {
 					if (File.Exists(Program.CsvDir + "_Rename.csv"))
@@ -114,7 +124,8 @@ namespace MinorShift.Emuera.GameProc
                 {
                     console.PrintSingleLine(Config.LoadLabel);
                     console.RefreshStrings(true);
-                }
+				}
+				//gamebase.csv読み込み
 				gamebase = new GameBase();
                 if (!gamebase.LoadGameBaseCsv(Program.CsvDir + "GAMEBASE.CSV"))
                 {
@@ -125,6 +136,7 @@ namespace MinorShift.Emuera.GameProc
 				console.SetWindowTitle(gamebase.ScriptWindowTitle);
 				GlobalStatic.GameBaseData = gamebase;
 
+				//前記以外のcsvを全て読み込み
 				ConstantData constant = new ConstantData(gamebase);
 				constant.LoadData(Program.CsvDir, console, Config.DisplayReport);
 				GlobalStatic.ConstantData = constant;
@@ -147,6 +159,8 @@ namespace MinorShift.Emuera.GameProc
 				HeaderFileLoader hLoader = new HeaderFileLoader(console, idDic, this);
 
 				LexicalAnalyzer.UseMacro = false;
+
+				//ERH読込
 				if (!hLoader.LoadHeaderFiles(Program.ErbDir, Config.DisplayReport))
 				{
 					ParserMediator.FlushWarningList();
@@ -155,6 +169,9 @@ namespace MinorShift.Emuera.GameProc
 				}
 				LexicalAnalyzer.UseMacro = idDic.UseMacro();
 
+				//TODO:ユーザー定義変数用のcsvの適用
+
+				//ERB読込
 				ErbLoader loader = new ErbLoader(console, exm, this);
                 if (Program.AnalysisMode)
                     noError = loader.loadErbs(Program.AnalysisFiles, labelDic);

@@ -47,7 +47,8 @@ namespace MinorShift.Emuera
 			//ExeDirにバリアントのパスを代入することでテスト実行するためのコード。
 			//ローカルパスの末尾には\必須。
 			//ローカルパスを記載した場合は頒布前に削除すること。
-
+			ExeDir = @"";
+			
 #endif
 			CsvDir = ExeDir + "csv\\";
 			ErbDir = ExeDir + "erb\\";
