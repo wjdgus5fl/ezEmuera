@@ -1,8 +1,8 @@
 diff --git a/Emuera/Emuera.csproj b/Emuera/Emuera.csproj
-index aa2a524..48df99a 100644
+index aa2a524..32354d7 100644
 --- a/Emuera/Emuera.csproj
 +++ b/Emuera/Emuera.csproj
-@@ -9,13 +9,13 @@
+@@ -9,7 +9,7 @@
      <OutputType>WinExe</OutputType>
      <AppDesignerFolder>Properties</AppDesignerFolder>
      <RootNamespace>MinorShift.Emuera</RootNamespace>
@@ -11,13 +11,6 @@ index aa2a524..48df99a 100644
      <FileUpgradeFlags>
      </FileUpgradeFlags>
      <UpgradeBackupLocation>
-     </UpgradeBackupLocation>
-     <OldToolsVersion>3.5</OldToolsVersion>
--    <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
-+    <TargetFrameworkVersion>v4.7.1</TargetFrameworkVersion>
-     <IsWebBootstrapper>false</IsWebBootstrapper>
-     <TargetFrameworkProfile>
-     </TargetFrameworkProfile>
 @@ -43,6 +43,7 @@
      <ErrorReport>prompt</ErrorReport>
      <WarningLevel>4</WarningLevel>
@@ -26,7 +19,7 @@ index aa2a524..48df99a 100644
    </PropertyGroup>
    <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
      <DebugType>none</DebugType>
-@@ -52,8 +53,12 @@
+@@ -52,8 +53,15 @@
      <ErrorReport>prompt</ErrorReport>
      <WarningLevel>4</WarningLevel>
      <Prefer32Bit>false</Prefer32Bit>
@@ -36,10 +29,13 @@ index aa2a524..48df99a 100644
 +    <Reference Include="EZTrans">
 +      <HintPath>..\Library\EZTrans.dll</HintPath>
 +    </Reference>
++    <Reference Include="Newtonsoft.Json">
++      <HintPath>..\Library\Newtonsoft.Json.dll</HintPath>
++    </Reference>
      <Reference Include="Microsoft.VisualBasic" />
      <Reference Include="System" />
      <Reference Include="System.Data" />
-@@ -74,6 +79,7 @@
+@@ -74,6 +82,7 @@
      <Compile Include="Content\AppContents.cs" />
      <Compile Include="Content\CroppedImage.cs" />
      <Compile Include="Content\GraphicsImage.cs" />
@@ -47,7 +43,7 @@ index aa2a524..48df99a 100644
      <Compile Include="Forms\ClipBoardDialog.cs">
        <SubType>Form</SubType>
      </Compile>
-@@ -269,7 +276,19 @@
+@@ -269,7 +278,11 @@
        <Install>false</Install>
      </BootstrapperPackage>
    </ItemGroup>
@@ -56,14 +52,6 @@ index aa2a524..48df99a 100644
 +    <Content Include="EmueraLicense.txt">
 +      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
 +    </Content>
-+    <Content Include="Emuera_readme.txt">
-+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-+    </Content>
-+  </ItemGroup>
-+  <ItemGroup>
-+    <PackageReference Include="Newtonsoft.Json">
-+      <Version>11.0.2</Version>
-+    </PackageReference>
 +  </ItemGroup>
    <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
    <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
@@ -217,7 +205,7 @@ index a6fac4e..c8c29dd 100644
  		//ERBloaderに引数解析の結果を渡すための橋渡し変数
  		//1756 Processから移動。Program.AnalysisMode用
 diff --git a/Emuera/Program.cs b/Emuera/Program.cs
-index ede236b..802cc84 100644
+index 74b831b..cd92e5d 100644
 --- a/Emuera/Program.cs
 +++ b/Emuera/Program.cs
 @@ -6,6 +6,9 @@ using MinorShift._Library;
@@ -230,7 +218,7 @@ index ede236b..802cc84 100644
  
  namespace MinorShift.Emuera
  {
-@@ -135,6 +138,9 @@ namespace MinorShift.Emuera
+@@ -136,6 +139,9 @@ namespace MinorShift.Emuera
  					}
  				}
  			}
@@ -240,7 +228,7 @@ index ede236b..802cc84 100644
  			MainWindow win = null;
  			while (true)
  			{
-@@ -166,8 +172,84 @@ namespace MinorShift.Emuera
+@@ -167,8 +173,84 @@ namespace MinorShift.Emuera
  				Reboot = false;
  				ConfigData.Instance.ReLoadConfig();
  			}
