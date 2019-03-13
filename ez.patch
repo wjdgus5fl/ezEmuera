@@ -1,0 +1,327 @@
+diff --git a/Emuera/Emuera.csproj b/Emuera/Emuera.csproj
+index aa2a524..48df99a 100644
+--- a/Emuera/Emuera.csproj
++++ b/Emuera/Emuera.csproj
+@@ -9,13 +9,13 @@
+     <OutputType>WinExe</OutputType>
+     <AppDesignerFolder>Properties</AppDesignerFolder>
+     <RootNamespace>MinorShift.Emuera</RootNamespace>
+-    <AssemblyName>Emuera</AssemblyName>
++    <AssemblyName>ezEmuera</AssemblyName>
+     <FileUpgradeFlags>
+     </FileUpgradeFlags>
+     <UpgradeBackupLocation>
+     </UpgradeBackupLocation>
+     <OldToolsVersion>3.5</OldToolsVersion>
+-    <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
++    <TargetFrameworkVersion>v4.7.1</TargetFrameworkVersion>
+     <IsWebBootstrapper>false</IsWebBootstrapper>
+     <TargetFrameworkProfile>
+     </TargetFrameworkProfile>
+@@ -43,6 +43,7 @@
+     <ErrorReport>prompt</ErrorReport>
+     <WarningLevel>4</WarningLevel>
+     <Prefer32Bit>false</Prefer32Bit>
++    <PlatformTarget>x86</PlatformTarget>
+   </PropertyGroup>
+   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+     <DebugType>none</DebugType>
+@@ -52,8 +53,12 @@
+     <ErrorReport>prompt</ErrorReport>
+     <WarningLevel>4</WarningLevel>
+     <Prefer32Bit>false</Prefer32Bit>
++    <PlatformTarget>x86</PlatformTarget>
+   </PropertyGroup>
+   <ItemGroup>
++    <Reference Include="EZTrans">
++      <HintPath>..\Library\EZTrans.dll</HintPath>
++    </Reference>
+     <Reference Include="Microsoft.VisualBasic" />
+     <Reference Include="System" />
+     <Reference Include="System.Data" />
+@@ -74,6 +79,7 @@
+     <Compile Include="Content\AppContents.cs" />
+     <Compile Include="Content\CroppedImage.cs" />
+     <Compile Include="Content\GraphicsImage.cs" />
++    <Compile Include="EzEmueraSetting.cs" />
+     <Compile Include="Forms\ClipBoardDialog.cs">
+       <SubType>Form</SubType>
+     </Compile>
+@@ -269,7 +276,19 @@
+       <Install>false</Install>
+     </BootstrapperPackage>
+   </ItemGroup>
+-  <ItemGroup />
++  <ItemGroup>
++    <Content Include="EmueraLicense.txt">
++      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
++    </Content>
++    <Content Include="Emuera_readme.txt">
++      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
++    </Content>
++  </ItemGroup>
++  <ItemGroup>
++    <PackageReference Include="Newtonsoft.Json">
++      <Version>11.0.2</Version>
++    </PackageReference>
++  </ItemGroup>
+   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
+   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
+        Other similar extension points exist, see Microsoft.Common.targets.
+diff --git a/license.txt b/Emuera/EmueraLicense.txt
+similarity index 94%
+rename from license.txt
+rename to Emuera/EmueraLicense.txt
+index e01742a..771d3e7 100644
+diff --git a/Emuera/EzEmueraSetting.cs b/Emuera/EzEmueraSetting.cs
+new file mode 100644
+index 0000000..5b1267c
+--- /dev/null
++++ b/Emuera/EzEmueraSetting.cs
+@@ -0,0 +1,15 @@
++﻿using Newtonsoft.Json;
++using System.Text;
++
++namespace MinorShift.Emuera
++{
++    public sealed class EzEmueraSetting
++    {
++        public int ReadEncodingCode { get; set; }
++
++        [JsonIgnore]
++        public Encoding ReadEncoding => Encoding.GetEncoding(ReadEncodingCode);
++        
++        public string EzTransPath { get; set; }
++    }
++}
+diff --git a/Emuera/GameProc/Function/BuiltInFunctionCode.cs b/Emuera/GameProc/Function/BuiltInFunctionCode.cs
+index c67c506..71e8528 100644
+--- a/Emuera/GameProc/Function/BuiltInFunctionCode.cs
++++ b/Emuera/GameProc/Function/BuiltInFunctionCode.cs
+@@ -355,5 +355,7 @@ namespace MinorShift.Emuera.GameProc.Function
+ 		PRINT_SPACE,
+ 
+ 		INPUTMOUSEKEY,
++
++		EZ,
+ 	}
+ }
+diff --git a/Emuera/GameProc/Function/FunctionIdentifier.cs b/Emuera/GameProc/Function/FunctionIdentifier.cs
+index 1dd90c6..b30eb12 100644
+--- a/Emuera/GameProc/Function/FunctionIdentifier.cs
++++ b/Emuera/GameProc/Function/FunctionIdentifier.cs
+@@ -388,6 +388,8 @@ namespace MinorShift.Emuera.GameProc.Function
+ 			addFunction(FunctionCode.ENCODETOUNI, argb[FunctionArgType.FORM_STR_NULLABLE], METHOD_SAFE | EXTENDED);//式中関数版を追加。処理が全然違う
+ 			#endregion
+ 
++			addFunction(FunctionCode.EZ, new EZ_Instruction());
++
+ 			Dictionary<string, FunctionMethod> methodList = FunctionMethodCreator.GetMethodList();
+ 			foreach (KeyValuePair<string, FunctionMethod> pair in methodList)
+ 			{
+diff --git a/Emuera/GameProc/Function/Instraction.Child.cs b/Emuera/GameProc/Function/Instraction.Child.cs
+index 35bde06..cca8a84 100644
+--- a/Emuera/GameProc/Function/Instraction.Child.cs
++++ b/Emuera/GameProc/Function/Instraction.Child.cs
+@@ -9,6 +9,7 @@ using MinorShift._Library;
+ using MinorShift.Emuera.GameData.Function;
+ using System.Drawing;
+ using System.IO;
++using Riey.EZTrans;
+ 
+ namespace MinorShift.Emuera.GameProc.Function
+ {
+@@ -2438,5 +2439,46 @@ namespace MinorShift.Emuera.GameProc.Function
+ 			}
+ 		}
+ 		#endregion
++
++	    #region ezFunction
++
++	    private sealed class EZ_Instruction : AbstractInstruction
++	    {
++	        public EZ_Instruction()
++	        {
++	            ArgBuilder = ArgumentParser.GetArgumentBuilder(FunctionArgType.SP_CALL);
++
++	            flag = METHOD_SAFE;
++	        }
++
++	        public override void DoInstruction(ExpressionMediator exm, InstructionLine func, ProcessState state)
++	        {
++	            if (!TranslateXP.IsInitialized) return;
++
++	            if(!(func.Argument is SpCallArgment arg))
++                    throw new CodeEE("EZ error", func.Position);
++
++	            switch (arg.FuncnameTerm.GetStrValue(exm).ToUpper())
++	            {
++                    case "ADDDIC_AFTER":
++                        TranslateXP.UserDic.AfterDic[arg.RowArgs[0].GetStrValue(exm)] = arg.RowArgs[1].GetStrValue(exm);
++                        break;
++                    case "ADDDIC":
++	                case "ADDDIC_PRI":
++	                    TranslateXP.UserDic.PreDic[arg.RowArgs[0].GetStrValue(exm)] = arg.RowArgs[1].GetStrValue(exm);
++	                    break;
++                    case "TRANS_OFF":
++                        GlobalStatic.EzTransState = false;
++                        exm.Console.RefreshStrings(true);
++                        break;
++                    case "TRANS_ON":
++                        GlobalStatic.EzTransState = true;
++                        exm.Console.RefreshStrings(true);
++                        break;
++                }
++	        }
++	    }
++
++	    #endregion
+ 	}
+ }
+\ No newline at end of file
+diff --git a/Emuera/GameView/AConsoleDisplayPart.cs b/Emuera/GameView/AConsoleDisplayPart.cs
+index fc22728..87ec2a8 100644
+--- a/Emuera/GameView/AConsoleDisplayPart.cs
++++ b/Emuera/GameView/AConsoleDisplayPart.cs
+@@ -12,7 +12,18 @@ namespace MinorShift.Emuera.GameView
+ 	{
+ 		public bool Error { get; protected set; }
+ 
+-		public string Str { get; protected set; }
++	    private string _originalStr, _translatedStr;
++
++	    public string Str
++	    {
++	        get => GlobalStatic.EzTransState ? _translatedStr : _originalStr;
++	        protected set
++	        {
++	            _originalStr = value;
++	            _translatedStr = Riey.EZTrans.TranslateXP.Translate(_originalStr);
++	        }
++	    }
++
+ 		public string AltText { get; protected set; }
+ 		public int PointX { get; set; }
+ 		public float XsubPixel { get; set; }
+diff --git a/Emuera/GlobalStatic.cs b/Emuera/GlobalStatic.cs
+index a6fac4e..c8c29dd 100644
+--- a/Emuera/GlobalStatic.cs
++++ b/Emuera/GlobalStatic.cs
+@@ -35,6 +35,8 @@ namespace MinorShift.Emuera
+ 		//
+ 		public static LabelDictionary LabelDictionary;
+ 
++	    public static bool EzTransState = false;
++
+ 
+ 		//ERBloaderに引数解析の結果を渡すための橋渡し変数
+ 		//1756 Processから移動。Program.AnalysisMode用
+diff --git a/Emuera/Program.cs b/Emuera/Program.cs
+index ede236b..802cc84 100644
+--- a/Emuera/Program.cs
++++ b/Emuera/Program.cs
+@@ -6,6 +6,9 @@ using MinorShift._Library;
+ using MinorShift.Emuera.GameView;
+ using MinorShift.Emuera.GameData.Expression;
+ using System.IO;
++using System.Text;
++using Newtonsoft.Json;
++using Riey.EZTrans;
+ 
+ namespace MinorShift.Emuera
+ {
+@@ -135,6 +138,9 @@ namespace MinorShift.Emuera
+ 					}
+ 				}
+ 			}
++
++			InitEzEmuera();
++
+ 			MainWindow win = null;
+ 			while (true)
+ 			{
+@@ -166,8 +172,84 @@ namespace MinorShift.Emuera
+ 				Reboot = false;
+ 				ConfigData.Instance.ReLoadConfig();
+ 			}
++
++            ExitEzEmuera();
+ 		}
+ 
++
++	    private static void InitEzEmuera()
++	    {
++	        var cachePath = Path.Combine(ExeDir, "cache.dat");
++
++	        if (File.Exists(cachePath))
++	        {
++                TranslateXP.LoadCache(cachePath);
++	        }
++            else
++            {
++                TranslateXP.LoadCache(null);
++            }
++
++            var dicPath = Path.Combine(ExeDir, "userdic.json");
++
++	        if (File.Exists(dicPath))
++	        {
++	            TranslateXP.UserDic = JsonConvert.DeserializeObject<UserDictionary>(File.ReadAllText(dicPath));
++	        }
++	        else
++	        {
++                TranslateXP.UserDic = new UserDictionary();
++	        }
++
++            var setting = new EzEmueraSetting
++                {
++                    ReadEncodingCode = 932
++                };
++
++	        var jsonPath = Path.Combine(ExeDir, "ez.json");
++
++	        if (File.Exists(jsonPath))
++	        {
++	            setting = JsonConvert.DeserializeObject<EzEmueraSetting>(File.ReadAllText(jsonPath));
++	        }
++
++	        if (string.IsNullOrEmpty(setting.EzTransPath))
++	        {
++	            using (var dialog = new FolderBrowserDialog())
++	            {
++	                dialog.Description = "이지트랜스 경로를 설정해주세요";
++
++	                if (dialog.ShowDialog() != DialogResult.OK)
++	                    return;
++
++	                setting.EzTransPath = dialog.SelectedPath;
++	            }
++	        }
++
++	        Config.Encode = setting.ReadEncoding;
++
++	        int result = TranslateXP.Initialize(setting.EzTransPath);
++
++	        if (result != 0)
++	        {
++	            if (result == 126)
++	                setting.EzTransPath = "";
++
++	            MessageBox.Show($"에러코드: {result}", "ezTrans 초기화에 실패했습니다");
++	        }
++
++
++	        File.WriteAllText(jsonPath, JsonConvert.SerializeObject(setting, Formatting.Indented));
++            GlobalStatic.EzTransState = TranslateXP.IsInitialized;
++	    }
++
++	    private static void ExitEzEmuera()
++	    {
++            TranslateXP.SaveCache(Path.Combine(ExeDir, "cache.dat"));
++            TranslateXP.Terminate();
++	        File.WriteAllText(Path.Combine(ExeDir, "userdic.json"), JsonConvert.SerializeObject(TranslateXP.UserDic, Formatting.Indented));
++	    }
++
+ 		/// <summary>
+ 		/// 実行ファイルのディレクトリ。最後に\を付けたstring
+ 		/// </summary>
