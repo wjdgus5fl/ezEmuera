@@ -35,6 +35,8 @@ namespace MinorShift.Emuera
 		//
 		public static LabelDictionary LabelDictionary;
 
+	    public static bool EzTransState = false;
+
 
 		//ERBloaderに引数解析の結果を渡すための橋渡し変数
 		//1756 Processから移動。Program.AnalysisMode用

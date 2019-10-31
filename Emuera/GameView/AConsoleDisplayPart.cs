@@ -12,7 +12,18 @@ namespace MinorShift.Emuera.GameView
 	{
 		public bool Error { get; protected set; }
 
-		public string Str { get; protected set; }
+	    private string _originalStr, _translatedStr;
+
+	    public string Str
+	    {
+	        get => GlobalStatic.EzTransState ? _translatedStr : _originalStr;
+	        protected set
+	        {
+	            _originalStr = value;
+	            _translatedStr = Riey.EzTranslate.Translate(_originalStr);
+	        }
+	    }
+
 		public string AltText { get; protected set; }
 		public int PointX { get; set; }
 		public float XsubPixel { get; set; }

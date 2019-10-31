@@ -6,6 +6,8 @@ using MinorShift._Library;
 using MinorShift.Emuera.GameView;
 using MinorShift.Emuera.GameData.Expression;
 using System.IO;
+using System.Text;
+using Riey;
 
 namespace MinorShift.Emuera
 {
@@ -136,6 +138,9 @@ namespace MinorShift.Emuera
 					}
 				}
 			}
+
+			InitEzEmuera();
+
 			MainWindow win = null;
 			while (true)
 			{
@@ -167,7 +172,52 @@ namespace MinorShift.Emuera
 				Reboot = false;
 				ConfigData.Instance.ReLoadConfig();
 			}
+
+            ExitEzEmuera();
 		}
+
+
+	    private static void InitEzEmuera()
+	    {
+	        var ezPathFile = Path.Combine(ExeDir, "ez_path.txt");
+			var ezPath = "";
+
+	        if (File.Exists(ezPathFile))
+	        {
+				ezPath = File.ReadAllText(ezPathFile);
+	        }
+			else
+			{
+	            using (var dialog = new FolderBrowserDialog())
+	            {
+	                dialog.Description = "이지트랜스 경로를 설정해주세요";
+
+	                if (dialog.ShowDialog() != DialogResult.OK)
+	                    return;
+
+	                ezPath = dialog.SelectedPath;
+	            }
+
+				File.WriteAllText(ezPathFile, ezPath);
+			}
+
+	        bool result = EzTranslate.Init(ezPath, ".");
+
+	        if (!result)
+	        {
+	            MessageBox.Show("ezTrans 초기화에 실패했습니다");
+	        }
+
+			EzTranslate.Save(".");
+
+            GlobalStatic.EzTransState = EzTranslate.IsInitialized;
+	    }
+
+	    private static void ExitEzEmuera()
+	    {
+			EzTranslate.Save(".");
+			EzTranslate.Delete();
+	    }
 
 		/// <summary>
 		/// 実行ファイルのディレクトリ。最後に\を付けたstring

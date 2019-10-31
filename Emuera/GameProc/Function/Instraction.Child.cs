@@ -9,6 +9,7 @@ using MinorShift._Library;
 using MinorShift.Emuera.GameData.Function;
 using System.Drawing;
 using System.IO;
+using Riey;
 
 namespace MinorShift.Emuera.GameProc.Function
 {
@@ -2438,5 +2439,46 @@ namespace MinorShift.Emuera.GameProc.Function
 			}
 		}
 		#endregion
+
+	    #region ezFunction
+
+	    private sealed class EZ_Instruction : AbstractInstruction
+	    {
+	        public EZ_Instruction()
+	        {
+	            ArgBuilder = ArgumentParser.GetArgumentBuilder(FunctionArgType.SP_CALL);
+
+	            flag = METHOD_SAFE;
+	        }
+
+	        public override void DoInstruction(ExpressionMediator exm, InstructionLine func, ProcessState state)
+	        {
+	            if (!EzTranslate.IsInitialized) return;
+
+	            if(!(func.Argument is SpCallArgment arg))
+                    throw new CodeEE("EZ error", func.Position);
+
+	            switch (arg.FuncnameTerm.GetStrValue(exm).ToUpper())
+	            {
+                    case "ADDDIC_AFTER":
+                        EzTranslate.AddAfterDict(arg.RowArgs[0].GetStrValue(exm), arg.RowArgs[1].GetStrValue(exm));
+                        break;
+                    case "ADDDIC":
+	                case "ADDDIC_BEFORE":
+                        EzTranslate.AddBeforeDict(arg.RowArgs[0].GetStrValue(exm), arg.RowArgs[1].GetStrValue(exm));
+	                    break;
+                    case "TRANS_OFF":
+                        GlobalStatic.EzTransState = false;
+                        exm.Console.RefreshStrings(true);
+                        break;
+                    case "TRANS_ON":
+                        GlobalStatic.EzTransState = true;
+                        exm.Console.RefreshStrings(true);
+                        break;
+                }
+	        }
+	    }
+
+	    #endregion
 	}
 }
