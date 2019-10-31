@@ -265,10 +265,6 @@ index 74b831b..2e88013 100644
  		/// <summary>
  		/// 実行ファイルのディレクトリ。最後に\を付けたstring
  		/// </summary>
-diff --git a/ezemuera_trans.dll b/ezemuera_trans.dll
-deleted file mode 100755
-index 84f9f10..0000000
-Binary files a/ezemuera_trans.dll and /dev/null differ
 diff --git a/license.txt b/license.txt
 deleted file mode 100644
 index e01742a..0000000
