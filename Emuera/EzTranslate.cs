@@ -118,22 +118,22 @@ namespace Riey {
             }
         }
 
-        [DllImport(DLL_NAME)]
+        [DllImport(DLL_NAME, CallingConvention = CallingConvention.Cdecl)]
         private extern unsafe static IntPtr ez_init(char* path, UIntPtr pathLen, char* ctxPath, UIntPtr ctxPathLen);
 
-        [DllImport(DLL_NAME)]
+        [DllImport(DLL_NAME, CallingConvention = CallingConvention.Cdecl)]
         private extern unsafe static void ez_save(IntPtr ctx, char* ctxPath, UIntPtr ctxPathLen);
 
-        [DllImport(DLL_NAME)]
+        [DllImport(DLL_NAME, CallingConvention = CallingConvention.Cdecl)]
         private extern unsafe static void ez_delete(IntPtr ctx);
 
-        [DllImport(DLL_NAME)]
+        [DllImport(DLL_NAME, CallingConvention = CallingConvention.Cdecl)]
         private extern unsafe static int ez_translate(IntPtr ctx, char* text, UIntPtr textLen, byte** outText, UIntPtr* outTextLen);
 
-        [DllImport(DLL_NAME)]
+        [DllImport(DLL_NAME, CallingConvention = CallingConvention.Cdecl)]
         private extern unsafe static void ez_add_before_dict(IntPtr ctx, char* key, UIntPtr keyLen, char* value, UIntPtr valueLen);
 
-        [DllImport(DLL_NAME)]
+        [DllImport(DLL_NAME, CallingConvention = CallingConvention.Cdecl)]
         private extern unsafe static void ez_add_after_dict(IntPtr ctx, char* key, UIntPtr keyLen, char* value, UIntPtr valueLen);
     }
 }
